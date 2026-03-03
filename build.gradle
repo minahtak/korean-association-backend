@@ -53,6 +53,8 @@ dependencies {
     // 이메일 전송을 위한 메일 라이브러리
     implementation 'org.springframework.boot:spring-boot-starter-mail'
 
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+
 }
 
 tasks.named('test') {
