@@ -25,8 +25,8 @@ repositories {
 }
 
 dependencies {
-    // 🚨 1. h2console은 아예 삭제했습니다!
-    // 🚨 2. webmvc -> web 으로 수정했습니다!
+    // 1. h2console은 아예 삭제
+    // 2. webmvc -> web 으로 수정
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
