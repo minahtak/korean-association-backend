@@ -61,4 +61,18 @@ public class MaterialApiController {
         materialService.delete(id);
         return ResponseEntity.ok("deleted");
     }
+
+    // ★ 5. 자료 수정
+    @PostMapping("/{id}/edit")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'STAFF')")
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody MaterialFormDto dto) {
+        try {
+
+            materialService.update(id, dto);
+            return ResponseEntity.ok("updated");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
 }

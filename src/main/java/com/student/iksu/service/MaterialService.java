@@ -81,11 +81,16 @@ public class MaterialService {
         // 내용 업데이트
         material.updateMaterial(
                 dto.getTitle(), dto.getContent(), dto.getGoogleDriveLink(),
-                dto.getSchool(), dto.getMajor(), dto.getSubject(), dto.getProfessor(), // <-- professor 추가
+                dto.getSchool(), dto.getMajor(), dto.getSubject(), dto.getProfessor(),
                 dto.getLanguage(), dto.getTranslationType()
         );
 
-        // 기여자 이름도 수정할 수 있게 업데이트 (혹시 오타 났을 때를 대비해)
+        // ★ 버그 수정: Entity의 updateMaterial 파라미터에 category가 없어서 여기서 따로 set 해줍니다.
+        if (dto.getCategory() != null) {
+            material.setCategory(dto.getCategory());
+        }
+
+        // 기여자 이름도 수정할 수 있게 업데이트
         if (dto.getWriter() != null && !dto.getWriter().isEmpty()) {
             material.setWriter(dto.getWriter());
         }
