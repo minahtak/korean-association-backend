@@ -6,7 +6,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.SQLRestriction;
+// import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.Where;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -36,7 +37,8 @@ public class Gallery {
 
     @OneToMany(mappedBy = "gallery", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("regDate asc")
-    @SQLRestriction("parent_id is null")
+    // @SQLRestriction("parent_id is null")
+    @Where(clause = "parent_id is null")
     @JsonIgnoreProperties({"gallery", "info", "material", "parent"})
     private List<Comment> comments = new ArrayList<>();
 

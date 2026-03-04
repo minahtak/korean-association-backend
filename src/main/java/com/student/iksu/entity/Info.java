@@ -5,7 +5,8 @@ import com.student.iksu.constant.InfoStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.SQLRestriction;
+// import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.Where;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.time.LocalDateTime;
@@ -44,7 +45,8 @@ public class Info {
     // 댓글 연결
     @OneToMany(mappedBy = "info", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("regDate asc")
-    @SQLRestriction("parent_id is null") // ★ 부모 없는 댓글만 가져오기 (필터링)
+    // @SQLRestriction("parent_id is null") // ★ 부모 없는 댓글만 가져오기 (필터링)
+    @Where(clause = "parent_id is null")
     @JsonIgnoreProperties({"info", "gallery", "material", "parent"}) // ★ 무한 루프 방지
     private List<Comment> comments = new ArrayList<>();
 }

@@ -9,7 +9,8 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import org.hibernate.annotations.SQLRestriction;
+// import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.Where;
 
 @Entity
 @Getter @Setter
@@ -52,7 +53,8 @@ public class Material {
     // --- 6. 댓글 리스트 ---
     @OneToMany(mappedBy = "material", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("regDate asc")
-    @SQLRestriction("parent_id is null") // 이 줄을 반드시 추가해야 중복이 사라짐
+    // @SQLRestriction("parent_id is null") // 이 줄을 반드시 추가해야 중복이 사라짐
+    @Where(clause = "parent_id is null")
     // ★ JSON 에러 방지: 댓글 안의 'material', 'info', 'gallery', 'parent' 필드는 직렬화 제외
     @JsonIgnoreProperties({"material", "info", "gallery", "parent"})
     private List<Comment> comments = new ArrayList<>();
