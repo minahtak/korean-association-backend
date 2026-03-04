@@ -63,8 +63,8 @@ dependencies {
 
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 }
-    // 일반 plain jar 파일은 생성하지 않도록 설정
-    jar {
+    // 일반 plain jar 파일은 생성하지 않도록 설정 (최신 문법)
+    tasks.named('jar') {
         enabled = false
     }
 
