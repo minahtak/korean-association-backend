@@ -9,8 +9,10 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                // 👇 나중에 Vercel 배포가 끝나면 발급받은 주소로 꼭 바꿔줘야 함
-                .allowedOrigins("https://skaisrael.com", "https://본인의-vercel-주소.vercel.app")
+                .allowedOrigins("https://skaisrael.com",          // 공식 도메인 추가
+                        "https://www.skaisrael.com",      // www 포함 도메인 추가
+                        "https://skai-frontend-olive.vercel.app" // Vercel 기본 주소 추가
+                )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
