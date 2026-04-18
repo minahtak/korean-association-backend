@@ -83,8 +83,16 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // 실제 배포 시에는 도메인을 특정해하기. 개발용이라 로컬호스트 허용 중.
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+
+        // [수정] 허용할 도메인 목록에 실제 배포 주소들을 추가합니다.
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "https://skaisrael.com",
+                "https://www.skaisrael.com",
+                "https://skai-frontend-olive.vercel.app"
+        ));
+
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
