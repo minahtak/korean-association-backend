@@ -15,4 +15,4 @@ RUN chmod +x ./gradlew
 RUN ./gradlew build -x test
 
 # 6. 빌드된 jar 파일을 실행합니다
-CMD ["sh", "-c", "java -jar build/libs/*.jar"]
+CMD ["sh", "-c", "java -Xmx256m -Xms256m -jar build/libs/*.jar"]
