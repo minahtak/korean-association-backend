@@ -22,7 +22,7 @@ public class Info {
 
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "LONGTEXT")
     private String content;
 
     private String writer; // 작성자

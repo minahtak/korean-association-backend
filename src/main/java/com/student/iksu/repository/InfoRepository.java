@@ -15,7 +15,7 @@ public interface InfoRepository extends JpaRepository<Info, Long> {
             "(:schoolTag IS NULL OR i.schoolTag = :schoolTag) AND " +
             "(:category IS NULL OR i.category = :category) AND " +
             "(:keyword IS NULL OR i.title LIKE %:keyword% OR i.content LIKE %:keyword%) AND " +
-            "(:status IS NULL OR CAST(i.status AS string) = :status) AND " + // ★ 추가: 넘어온 status가 있으면 해당 상태만 검색
+            "(:status IS NULL OR CAST(i.status AS string) = :status) AND " + // 넘어온 status가 있으면 해당 상태만 검색
             "(" +
             "   :isAdmin = true " +
             "   OR i.status = 'APPROVED' " +
@@ -25,8 +25,9 @@ public interface InfoRepository extends JpaRepository<Info, Long> {
             @Param("schoolTag") String schoolTag,
             @Param("category") InfoCategory category,
             @Param("keyword") String keyword,
-            @Param("status") String status, // ★ 추가
+            @Param("status") String status,
             @Param("username") String username,
             @Param("isAdmin") boolean isAdmin,
             Pageable pageable);
 }
+

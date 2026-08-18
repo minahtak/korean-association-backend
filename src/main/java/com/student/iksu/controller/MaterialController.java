@@ -36,13 +36,12 @@ public class MaterialController {
                        @RequestParam(required = false) String keyword,
                        @PageableDefault(page = 0, size = 12, sort = "regDate", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        // ▼▼▼ [수정 1] 빈 문자열("")을 null로 변환 (검색 버그 해결) ▼▼▼
+        // 빈 문자열("")을 null로 변환
         if (school != null && school.isEmpty()) school = null;
         if (major != null && major.isEmpty()) major = null;
         if (language != null && language.isEmpty()) language = null;
         if (translationType != null && translationType.isEmpty()) translationType = null;
         if (keyword != null && keyword.isEmpty()) keyword = null;
-        // ▲▲▲ 수정 끝 ▲▲▲
 
         // 서비스 호출
         Page<Material> materials = materialService.getMaterialList(school, major, language, translationType, keyword, pageable);
