@@ -1,13 +1,17 @@
 package com.student.iksu.controller;
 
 import com.student.iksu.constant.Role;
+import com.student.iksu.dto.request.CandidateFormDto;
 import com.student.iksu.dto.request.ExecutiveFormDto;
+import com.student.iksu.entity.Candidate;
 import com.student.iksu.entity.Executive;
 import com.student.iksu.entity.Member;
+import com.student.iksu.repository.CandidateRepository;
 import com.student.iksu.repository.MemberRepository;
 import com.student.iksu.service.ExecutiveService;
 import com.student.iksu.service.MemberService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -131,6 +135,66 @@ public class AdminApiController {
             return ResponseEntity.ok("변경 완료");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("변경 실패");
+        }
+    }
+
+    // ==========================================
+    // 9. 선거 후보자 관리 API
+    // ==========================================
+
+    @Autowired
+    private CandidateRepository candidateRepository;
+
+    // 후보 등록
+    @PostMapping("/candidates")
+    public ResponseEntity<String> createCandidate(@RequestBody CandidateFormDto dto) {
+        try {
+            Candidate candidate = new Candidate(
+                    dto.getCandidateNumber(),
+                    dto.getName(),
+                    dto.getSchool(),
+                    dto.getSlogan(),
+                    dto.getImageUrl(),
+                    dto.getPledges()
+            );
+            candidateRepository.save(candidate);
+            return ResponseEntity.ok("후보자 등록 성공");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("후보자 등록 실패: " + e.getMessage());
+        }
+    }
+
+    // 후보 수정
+    @PutMapping("/candidates/{id}")
+    public ResponseEntity<String> updateCandidate(@PathVariable Long id, @RequestBody CandidateFormDto dto) {
+        try {
+            Candidate candidate = candidateRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("후보자를 찾을 수 없습니다."));
+
+            candidate.setCandidateNumber(dto.getCandidateNumber());
+            candidate.setName(dto.getName());
+            candidate.setSchool(dto.getSchool());
+            candidate.setSlogan(dto.getSlogan());
+            candidate.setImageUrl(dto.getImageUrl());
+            if (dto.getPledges() != null) {
+                candidate.setPledges(dto.getPledges());
+            }
+
+            candidateRepository.save(candidate);
+            return ResponseEntity.ok("후보자 수정 성공");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("후보자 수정 실패: " + e.getMessage());
+        }
+    }
+
+    // 후보 삭제
+    @DeleteMapping("/candidates/{id}")
+    public ResponseEntity<String> deleteCandidate(@PathVariable Long id) {
+        try {
+            candidateRepository.deleteById(id);
+            return ResponseEntity.ok("후보자 삭제 성공");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("후보자 삭제 실패: " + e.getMessage());
         }
     }
 }
