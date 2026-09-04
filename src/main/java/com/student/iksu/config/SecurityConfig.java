@@ -49,10 +49,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(auth -> auth
-                        // 1. 정적 리소스 및 프론트엔드 화면 허용 (★ 이 부분 전체 수정)
+                        // 1. 정적 리소스 및 프론트엔드 화면 허용
                         .requestMatchers(
                                 "/", "/index.html", "/assets/**", "/*.png", "/*.svg", "/favicon.ico", "/error",
                                 "/notice/**", "/info/**", "/gallery/**", "/material/**", "/about",
+                                "/election", "/election/**", // 선거 프론트 페이지 경로 추가
                                 "/login", "/join", "/find-id", "/reset-password", "/mypage", "/admin"
                         ).permitAll()
                         .requestMatchers("/h2-console/**", "/css/**", "/js/**", "/images/**").permitAll()
@@ -61,8 +62,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/check-username", "/api/check-email", "/api/email/**").permitAll()
 
+                        // ★ 2. 학생회 투표 API 전체 허용 (비로그인 학생들도 메일 인증 후 투표해야 하므로 permitAll)
+                        .requestMatchers("/api/election/**", "/election/**").permitAll()
+
                         // 3. 조회(GET) 전용 허용 목록
-                        // ★ [수정됨] 컨트롤러 경로(/api/gallery)와 일치시킴
                         .requestMatchers(HttpMethod.GET,
                                 "/api/notices/**",
                                 "/api/infos/**",
@@ -70,7 +73,10 @@ public class SecurityConfig {
                                 "/api/executives/**"
                         ).permitAll()
 
-                        // 4. 나머지 요청은 인증 필요
+                        // 4. 관리자 전용 API (어드민 페이지 권한)
+                        .requestMatchers("/api/admin/**").hasAnyAuthority("ADMIN", "STAFF")
+
+                        // 5. 나머지 요청은 인증 필요
                         .anyRequest().authenticated()
                 )
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -84,7 +90,6 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // [수정] 허용할 도메인 목록에 실제 배포 주소들을 추가합니다.
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:5173",
                 "http://localhost:3000",
