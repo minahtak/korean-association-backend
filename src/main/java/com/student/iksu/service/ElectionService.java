@@ -8,6 +8,7 @@ import com.student.iksu.entity.VoterParticipation;
 import com.student.iksu.repository.CandidateRepository;
 import com.student.iksu.repository.VoteVerificationCodeRepository;
 import com.student.iksu.repository.VoterParticipationRepository;
+import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -34,8 +37,26 @@ public class ElectionService {
     private final VoteVerificationCodeRepository voteVerificationCodeRepository;
     private final JavaMailSender mailSender;
 
-    // 히브리대학교 이메일 정규식 검증
     private static final Pattern HUJI_EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9._%+-]+@mail\\.huji\\.ac\\.il$", Pattern.CASE_INSENSITIVE);
+
+    // ★ [편의 기능] 관리자 등록 없이도 서버 구동 시 DB에 후보가 없으면 자동 생성
+    @PostConstruct
+    public void initSingleCandidateIfEmpty() {
+        if (candidateRepository.count() == 0) {
+            Candidate defaultCandidate = new Candidate(
+                    1,
+                    "DB에 후보가 없습니다",
+                    "히브리대학교 짱",
+                    "학생 여러분의 목소리로 더 가깝고 든든한 한인회를 만들겠습니다",
+                    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS2rchFPrbHvScd0pR4phXHN2zWcQcK68maCxYSpvlQqIQbxKA_UMt0ThgW&s=10",
+                    Arrays.asList(
+                            "후보가 등록되었는지 확인해주세요"
+                    )
+            );
+            candidateRepository.save(defaultCandidate);
+            log.info("단일 후보자가 DB에 자동 등록되었습니다.");
+        }
+    }
 
     // 1. 후보자 목록 조회
     @Transactional(readOnly = true)
@@ -45,33 +66,42 @@ public class ElectionService {
                 .collect(Collectors.toList());
     }
 
-    // 2. 투표용 히브리대 이메일 인증코드 발송
+    // ★ 2. 실시간 찬/반 집계 통계 조회
+    @Transactional(readOnly = true)
+    public Map<String, Integer> getVoteStats() {
+        List<Candidate> candidates = candidateRepository.findAllByOrderByCandidateNumberAsc();
+        if (candidates.isEmpty()) {
+            return Map.of("approve", 0, "reject", 0);
+        }
+        Candidate candidate = candidates.get(0);
+        return Map.of(
+                "approve", candidate.getVotes() != null ? candidate.getVotes() : 0,
+                "reject", candidate.getRejectVotes() != null ? candidate.getRejectVotes() : 0
+        );
+    }
+
+    // 3. 투표용 이메일 인증코드 발송
     public void sendVoteEmailCode(String email) {
         String cleanEmail = email.trim();
 
-        // 도메인 검증
         if (!HUJI_EMAIL_PATTERN.matcher(cleanEmail).matches()) {
             throw new IllegalArgumentException("히브리대학교 웹메일(@mail.huji.ac.il)만 유효합니다.");
         }
 
-        // 이미 투표한 이메일인지 체크
         if (voterParticipationRepository.existsByEmail(cleanEmail)) {
             throw new IllegalStateException("이미 이번 선거에 투표를 완료한 이메일입니다.");
         }
 
-        // 기존 잔여 코드 정리 후 6자리 난수 생성
         voteVerificationCodeRepository.deleteByEmail(cleanEmail);
         String code = generate6DigitCode();
 
-        // 5분 유효시간으로 저장
         VoteVerificationCode verificationCode = new VoteVerificationCode(cleanEmail, code, 5);
         voteVerificationCodeRepository.save(verificationCode);
 
-        // Gmail 메일 발송
         sendHtmlEmail(cleanEmail, code);
     }
 
-    // 3. 인증번호 확인
+    // 4. 인증번호 확인
     public boolean verifyVoteCode(String email, String code) {
         String cleanEmail = email.trim();
         VoteVerificationCode verifyCode = voteVerificationCodeRepository.findTopByEmailOrderByExpireAtDesc(cleanEmail)
@@ -90,22 +120,19 @@ public class ElectionService {
         return true;
     }
 
-    // 4. 최종 투표 제출 (트랜잭션)
+    // 5. 최종 찬/반 투표 제출
     @Transactional
     public void submitVote(VoteSubmitDto dto) {
         String email = dto.getEmail().trim();
 
-        // 이메일 검증
         if (!HUJI_EMAIL_PATTERN.matcher(email).matches()) {
             throw new IllegalArgumentException("유효하지 않은 이메일 형식입니다.");
         }
 
-        // 중복 투표 방지 (DB 유니크 제약 포함)
         if (voterParticipationRepository.existsByEmail(email)) {
             throw new IllegalStateException("이미 투표에 참여하셨습니다.");
         }
 
-        // 인증 여부 재검증 (보안)
         VoteVerificationCode verifyCode = voteVerificationCodeRepository.findTopByEmailOrderByExpireAtDesc(email)
                 .orElseThrow(() -> new IllegalStateException("이메일 인증이 완료되지 않았습니다."));
 
@@ -113,28 +140,40 @@ public class ElectionService {
             throw new IllegalStateException("인증 정보가 유효하지 않습니다.");
         }
 
-        // 후보자 존재 확인
-        Candidate candidate = candidateRepository.findById(dto.getCandidateId())
-                .orElseThrow(() -> new IllegalArgumentException("선택하신 후보자가 존재하지 않습니다."));
+        // 단일 후보 식별 (전달된 candidateId가 없거나 0이면 첫 번째 후보 지정)
+        Long targetCandidateId = dto.getCandidateId();
+        Candidate candidate;
+        if (targetCandidateId != null && targetCandidateId > 0) {
+            candidate = candidateRepository.findById(targetCandidateId)
+                    .orElseGet(() -> candidateRepository.findAll().stream().findFirst()
+                            .orElseThrow(() -> new IllegalStateException("등록된 후보자가 없습니다.")));
+        } else {
+            candidate = candidateRepository.findAll().stream().findFirst()
+                    .orElseThrow(() -> new IllegalStateException("등록된 후보자가 없습니다."));
+        }
 
-        // 1. 참여 기록 저장 (1인 1표용 - 선택 내용은 저장 안 함: 비밀투표 보장)
+        // 1. 참여자 이메일 저장 (1인 1표 보장용 - 선택 내용은 저장하지 않아 비밀투표 보장)
         voterParticipationRepository.save(new VoterParticipation(email));
 
-        // 2. 후보자 득표수 1 증가 (동시성 안전 쿼리)
-        candidateRepository.incrementVoteCount(candidate.getId());
+        // 2. ★ 찬성/반대에 따른 득표수 1 증가 (동시성 안전 쿼리)
+        boolean isReject = "REJECT".equalsIgnoreCase(dto.getChoice()) || Long.valueOf(0).equals(dto.getCandidateId());
+        if (isReject) {
+            candidateRepository.incrementRejectVoteCount(candidate.getId());
+        } else {
+            candidateRepository.incrementVoteCount(candidate.getId());
+        }
 
         // 3. 인증코드 삭제 (재사용 방지)
         voteVerificationCodeRepository.deleteByEmail(email);
     }
 
-    // 5. 투표 여부 확인
+    // 6. 투표 여부 확인
     @Transactional(readOnly = true)
     public boolean checkHasVoted(String email) {
         return voterParticipationRepository.existsByEmail(email.trim());
     }
 
     // --- 내부 헬퍼 메소드 ---
-
     private String generate6DigitCode() {
         SecureRandom random = new SecureRandom();
         int num = 100000 + random.nextInt(900000);

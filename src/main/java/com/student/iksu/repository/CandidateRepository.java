@@ -12,11 +12,15 @@ import java.util.List;
 @Repository
 public interface CandidateRepository extends JpaRepository<Candidate, Long> {
 
-    // 기호 순서대로 후보자 목록 정렬 조회
     List<Candidate> findAllByOrderByCandidateNumberAsc();
 
-    // 동시성 안전한 득표수 1 증가 쿼리
+    // 찬성표 1 증가
     @Modifying
     @Query("UPDATE Candidate c SET c.votes = c.votes + 1 WHERE c.id = :id")
     int incrementVoteCount(@Param("id") Long id);
+
+    // ★ 추가: 반대표 1 증가
+    @Modifying
+    @Query("UPDATE Candidate c SET c.rejectVotes = c.rejectVotes + 1 WHERE c.id = :id")
+    int incrementRejectVoteCount(@Param("id") Long id);
 }

@@ -25,7 +25,13 @@ public class ElectionApiController {
         return ResponseEntity.ok(electionService.getCandidates());
     }
 
-    // 2. 인증코드 발송
+    // ★ 2. 실시간 찬/반 집계 통계 조회 (추가됨)
+    @GetMapping("/stats")
+    public ResponseEntity<Map<String, Integer>> getVoteStats() {
+        return ResponseEntity.ok(electionService.getVoteStats());
+    }
+
+    // 3. 인증코드 발송
     @PostMapping("/send-code")
     public ResponseEntity<?> sendVoteCode(@RequestParam String email) {
         try {
@@ -39,7 +45,7 @@ public class ElectionApiController {
         }
     }
 
-    // 3. 인증코드 검증
+    // 4. 인증코드 검증
     @PostMapping("/verify-code")
     public ResponseEntity<?> verifyVoteCode(@RequestParam String email, @RequestParam String code) {
         try {
@@ -54,7 +60,7 @@ public class ElectionApiController {
         }
     }
 
-    // 4. 최종 투표 제출
+    // 5. 최종 찬/반 투표 제출
     @PostMapping("/vote")
     public ResponseEntity<?> castVote(@RequestBody VoteSubmitDto dto) {
         try {
@@ -66,7 +72,7 @@ public class ElectionApiController {
         }
     }
 
-    // 5. 투표 여부 확인
+    // 6. 투표 여부 확인
     @GetMapping("/check")
     public ResponseEntity<?> checkStatus(@RequestParam String email) {
         boolean hasVoted = electionService.checkHasVoted(email);

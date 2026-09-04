@@ -19,12 +19,12 @@ public class Candidate {
     private Long id;
 
     @Column(nullable = false)
-    private Integer candidateNumber; // 기호 1번, 2번 등
+    private Integer candidateNumber; // 기호 1번
 
     @Column(nullable = false)
     private String name;
 
-    private String school; // 예: "히브리대학교 컴퓨터공학과"
+    private String school;
 
     private String slogan;
 
@@ -37,7 +37,10 @@ public class Candidate {
     private List<String> pledges = new ArrayList<>();
 
     @Column(nullable = false)
-    private Integer votes = 0; // 득표수
+    private Integer votes = 0; // ★ 찬성표
+
+    @Column(nullable = false)
+    private Integer rejectVotes = 0; // ★ 추가: 반대표
 
     public Candidate(Integer candidateNumber, String name, String school, String slogan, String imageUrl, List<String> pledges) {
         this.candidateNumber = candidateNumber;
@@ -47,5 +50,6 @@ public class Candidate {
         this.imageUrl = imageUrl;
         this.pledges = pledges != null ? pledges : new ArrayList<>();
         this.votes = 0;
+        this.rejectVotes = 0;
     }
 }

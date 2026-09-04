@@ -20,7 +20,8 @@ public class CandidateResponseDto {
     private String slogan;
     private String imageUrl;
     private List<String> pledges;
-    private Integer votes;
+    private Integer votes;       // 찬성표
+    private Integer rejectVotes; // ★ 추가: 반대표
 
     public static CandidateResponseDto from(Candidate candidate) {
         return CandidateResponseDto.builder()
@@ -32,6 +33,7 @@ public class CandidateResponseDto {
                 .imageUrl(candidate.getImageUrl())
                 .pledges(candidate.getPledges())
                 .votes(candidate.getVotes())
+                .rejectVotes(candidate.getRejectVotes())
                 .build();
     }
 }
